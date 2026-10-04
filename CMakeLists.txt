@@ -15,6 +15,7 @@ set(CMAKE_PREFIX_PATH
 	"${libs}/glm"
 	"${libs}/libepoxy"
 	"${libs}/openal"
+	"${libs}/openxr"
 	"${libs}/sdl"
 	"${libs}/zlib"
 )
