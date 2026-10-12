@@ -12,6 +12,7 @@ set(libs "${CMAKE_CURRENT_LIST_DIR}/libs")
 set(CMAKE_PREFIX_PATH
 	"${libs}/boost"
 	"${libs}/dlss"
+	"${libs}/fidelityfx"
 	"${libs}/freetype"
 	"${libs}/glm"
 	"${libs}/libepoxy"
