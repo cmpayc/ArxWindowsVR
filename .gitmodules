@@ -1,7 +1,7 @@
 [submodule "arx"]
 	path = arx
-	url = https://github.com/arx/ArxLibertatis.git
-	branch = master
+	url = https://github.com/cmpayc/ArxLibertatisVR.git
+	branch = dx11
 [submodule "data"]
 	path = data
 	url = https://github.com/arx/ArxLibertatisData.git
