@@ -18,6 +18,7 @@ set(CMAKE_PREFIX_PATH
 	"${libs}/libepoxy"
 	"${libs}/openal"
 	"${libs}/sdl"
+	"${libs}/streamline"
 	"${libs}/zlib"
 )
 
