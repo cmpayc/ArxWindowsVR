@@ -17,6 +17,7 @@ set(CMAKE_PREFIX_PATH
 	"${libs}/openal"
 	"${libs}/openxr"
 	"${libs}/sdl"
+	"${libs}/vulkan"
 	"${libs}/zlib"
 )
 
