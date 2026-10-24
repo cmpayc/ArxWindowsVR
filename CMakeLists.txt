@@ -9,17 +9,35 @@ else()
 endif()
 
 set(libs "${CMAKE_CURRENT_LIST_DIR}/libs")
-set(CMAKE_PREFIX_PATH
-	"${libs}/boost"
-	"${libs}/freetype"
-	"${libs}/glm"
-	"${libs}/libepoxy"
-	"${libs}/openal"
-	"${libs}/openxr"
-	"${libs}/sdl"
-	"${libs}/vulkan"
-	"${libs}/zlib"
-)
+if(ANDROID)
+	# Built by android/build-deps.ps1, zlib and Vulkan come with the NDK
+	set(CMAKE_PREFIX_PATH
+		"${libs}/android-arm64"
+		"${libs}/boost"
+		"${libs}/glm"
+		"${libs}/vulkan"
+	)
+	# The NDK toolchain only searches the sysroot by default
+	list(APPEND CMAKE_FIND_ROOT_PATH ${CMAKE_PREFIX_PATH})
+	set(USE_OPENGL OFF CACHE BOOL "" FORCE)
+	set(BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+	set(BUILD_CRASHHANDLER OFF CACHE BOOL "" FORCE)
+	set(BUILD_PROFILER OFF CACHE BOOL "" FORCE)
+	set(INSTALL_BLENDER_PLUGIN OFF CACHE BOOL "" FORCE)
+	set(INSTALL_SCRIPTS OFF CACHE BOOL "" FORCE)
+else()
+	set(CMAKE_PREFIX_PATH
+		"${libs}/boost"
+		"${libs}/freetype"
+		"${libs}/glm"
+		"${libs}/libepoxy"
+		"${libs}/openal"
+		"${libs}/openxr"
+		"${libs}/sdl"
+		"${libs}/vulkan"
+		"${libs}/zlib"
+	)
+endif()
 
 if(DEFINED CMAKE_FIND_ROOT_PATH)
 	# Need to be able to find these using absolute paths
@@ -39,6 +57,11 @@ if(NOT DEFINED BUILD_TESTS)
 endif()
 
 add_subdirectory("arx")
+
+if(ANDROID)
+	# The libraries are packaged into the APK by Gradle, see android/app/build.gradle
+	return()
+endif()
 
 add_custom_target(copy-libs ALL)
 foreach(prefix IN LISTS CMAKE_PREFIX_PATH)

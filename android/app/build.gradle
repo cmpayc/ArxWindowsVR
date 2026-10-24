@@ -1,0 +1,93 @@
+plugins {
+	id 'com.android.application'
+}
+
+// The native code is built by CMake into build-android (see android/build.ps1), Gradle only packages it
+def root = file('../..')
+def nativeLib = new File(root, 'build-android/arx/arx/libmain.so')
+def depsLibs = new File(root, 'libs/android-arm64/lib')
+def generated = layout.buildDirectory.dir('generated/arx').get().asFile
+
+android {
+	namespace 'org.arxlibertatis.vr'
+	compileSdk 35
+	ndkVersion '27.1.12297006'
+
+	defaultConfig {
+		applicationId 'org.arxlibertatis.vr'
+		minSdk 29
+		targetSdk 32
+		versionCode 1
+		versionName '0.1.0'
+		ndk {
+			abiFilters 'arm64-v8a'
+		}
+	}
+
+	sourceSets {
+		main {
+			jniLibs.srcDirs = [new File(generated, 'jniLibs')]
+			assets.srcDirs = [new File(generated, 'assets')]
+			res.srcDirs += [new File(generated, 'res')]
+		}
+	}
+
+	buildTypes {
+		release {
+			minifyEnabled false
+			// Sideloaded builds, signed with the debug key
+			signingConfig signingConfigs.debug
+		}
+	}
+
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
+
+	packaging {
+		jniLibs {
+			// Compressed in the APK: libmain.so is large
+			useLegacyPackaging true
+		}
+	}
+
+	lint {
+		abortOnError false
+	}
+}
+
+def copyNativeLibs = tasks.register('copyNativeLibs', Copy) {
+	from(nativeLib)
+	from(depsLibs) {
+		include 'libSDL2.so', 'libopenal.so', 'libopenxr_loader.so'
+	}
+	into new File(generated, 'jniLibs/arm64-v8a')
+	doFirst {
+		if(!nativeLib.isFile()) {
+			throw new GradleException("${nativeLib} not found, run android/build.ps1")
+		}
+	}
+}
+
+def copyCoreData = tasks.register('copyCoreData', Copy) {
+	from new File(root, 'arx/data/core')
+	into new File(generated, 'assets/core')
+}
+
+def copyIcon = tasks.register('copyIcon', Copy) {
+	from new File(root, 'data/icons/arx-libertatis-192.png')
+	into new File(generated, 'res/mipmap-xxxhdpi')
+	rename { 'ic_launcher.png' }
+}
+
+tasks.named('preBuild') {
+	dependsOn copyNativeLibs, copyCoreData, copyIcon
+}
+
+// arx-vr.apk / arx-vr-debug.apk
+android.applicationVariants.configureEach { variant ->
+	variant.outputs.configureEach {
+		outputFileName = variant.buildType.name == 'release' ? 'arx-vr.apk' : "arx-vr-${variant.buildType.name}.apk"
+	}
+}
