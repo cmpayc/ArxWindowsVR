@@ -30,6 +30,7 @@ else()
 		"${libs}/boost"
 		"${libs}/freetype"
 		"${libs}/glm"
+		"${libs}/jolt"
 		"${libs}/libepoxy"
 		"${libs}/openal"
 		"${libs}/openxr"
