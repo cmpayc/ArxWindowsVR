@@ -3,6 +3,7 @@
 #  - SDL2 (shared, its Java sources go to android/app with sync-sdl-java, see the end)
 #  - FreeType (static)
 #  - OpenAL Soft (shared, AAudio / OpenSL ES backends)
+#  - Jolt Physics (static, like the Windows build, see build-jolt.ps1)
 #  - Khronos OpenXR loader for Android (prebuilt AAR from Maven Central)
 #
 # zlib and Vulkan come with the NDK, Boost and glm are header-only (libs/boost, libs/glm).
@@ -16,6 +17,7 @@ $ErrorActionPreference = 'Stop'
 $SdlVersion = '2.30.9'
 $FreetypeVersion = '2.13.3'
 $OpenalVersion = '1.24.1'
+$JoltVersion = '5.6.0' # The same as the Windows build (build-jolt.ps1)
 $OpenxrVersion = '1.1.65'
 
 $Root = Split-Path -Parent $PSScriptRoot
@@ -82,6 +84,24 @@ Build-CMake 'openal' $openal @('-DLIBTYPE=SHARED', '-DALSOFT_UTILS=OFF', '-DALSO
                                '-DALSOFT_INSTALL_CONFIG=OFF', '-DALSOFT_INSTALL_HRTF_DATA=OFF',
                                '-DALSOFT_INSTALL_AMBDEC_PRESETS=OFF', '-DALSOFT_INSTALL_EXAMPLES=OFF',
                                '-DALSOFT_INSTALL_UTILS=OFF')
+
+# Jolt Physics: static, linked into the game library (position independent). The compile definitions that must match
+# between Jolt and the game come with its CMake package (Jolt::Jolt), found by arx/CMakeLists.txt.
+$jolt = Get-Source 'Jolt Physics' "https://github.com/jrouwe/JoltPhysics/archive/refs/tags/v$JoltVersion.tar.gz" "JoltPhysics-$JoltVersion"
+Build-CMake 'jolt' (Join-Path $jolt 'Build') @('-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+                                                '-DENABLE_INSTALL=ON', '-DTARGET_UNIT_TESTS=OFF', '-DTARGET_HELLO_WORLD=OFF',
+                                                '-DTARGET_PERFORMANCE_TEST=OFF', '-DTARGET_SAMPLES=OFF', '-DTARGET_VIEWER=OFF',
+                                                '-DINTERPROCEDURAL_OPTIMIZATION=OFF',
+                                                # Keep the floating point environment of the game
+                                                '-DFLOATING_POINT_EXCEPTIONS_ENABLED=OFF',
+                                                '-DPROFILER_IN_DEBUG_AND_RELEASE=OFF',
+                                                # Off everywhere so that the defines of Jolt and the game match
+                                                '-DDEBUG_RENDERER_IN_DEBUG_AND_RELEASE=OFF',
+                                                '-DDEBUG_RENDERER_IN_DISTRIBUTION=OFF',
+                                                # No GPU compute (hair simulation)
+                                                '-DJPH_USE_DX12=OFF', '-DJPH_USE_VK=OFF', '-DJPH_USE_MTL=OFF',
+                                                '-DJPH_USE_CPU_COMPUTE=OFF')
+Copy-Item (Join-Path $jolt 'LICENSE') (Join-Path $Prefix 'LICENSE-Jolt.txt') -Force
 
 # OpenXR loader: the official Android build from the Khronos group
 $aar = Join-Path $Work "openxr_loader_for_android-$OpenxrVersion.aar"
