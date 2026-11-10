@@ -17,8 +17,8 @@ android {
 		applicationId 'org.arxlibertatis.vr'
 		minSdk 29
 		targetSdk 32
-		versionCode 6
-		versionName '0.4.2'
+		versionCode 7
+		versionName '0.5.0'
 		ndk {
 			abiFilters 'arm64-v8a'
 		}
@@ -75,6 +75,18 @@ def copyCoreData = tasks.register('copyCoreData', Copy) {
 	into new File(generated, 'assets/core')
 }
 
+// The licenses of the libraries built into the APK (from android/build-deps.ps1), readable in the APK's assets
+def copyLicenses = tasks.register('copyLicenses', Copy) {
+	from(depsLibs.parentFile) {
+		include 'LICENSE-*.txt'
+	}
+	from(root) {
+		include 'arx/COPYING', 'arx/LICENSE', 'arx/AUTHORS'
+		eachFile { path = name + '.txt' }
+	}
+	into new File(generated, 'assets/license')
+}
+
 def copyIcon = tasks.register('copyIcon', Copy) {
 	from new File(root, 'data/icons/arx-libertatis-192.png')
 	into new File(generated, 'res/mipmap-xxxhdpi')
@@ -82,7 +94,7 @@ def copyIcon = tasks.register('copyIcon', Copy) {
 }
 
 tasks.named('preBuild') {
-	dependsOn copyNativeLibs, copyCoreData, copyIcon
+	dependsOn copyNativeLibs, copyCoreData, copyLicenses, copyIcon
 }
 
 // arx-vr.apk / arx-vr-debug.apk
